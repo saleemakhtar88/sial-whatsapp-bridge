@@ -25,7 +25,11 @@ function ready() {
 }
 
 function getStatus() {
-  return { ready: isReady, hasQr: Boolean(lastQr) };
+  // Include the QR image (data URL) while we're waiting to be linked, so a
+  // caller (e.g. the SIAL portal) can render it through its own origin instead
+  // of needing direct access to this bridge's localhost port. Omitted once
+  // ready, to keep the health payload small when connected.
+  return { ready: isReady, hasQr: Boolean(lastQr), qrDataUrl: isReady ? null : (lastQrDataUrl || null) };
 }
 
 async function getQrDataUrl() {

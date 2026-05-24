@@ -37,6 +37,7 @@ app.get('/health', (req, res) => {
     success: true,
     ready: status.ready,
     hasQr: status.hasQr,
+    qrDataUrl: status.qrDataUrl || null,
     queued: queue.size(),
     uptimeSeconds: Math.round(process.uptime()),
   });
