@@ -1,0 +1,33 @@
+# Deterministic line endings so `git pull` never reports spurious "modified"
+# files on Windows. Without this, the CRLF<->LF conversion differs between
+# machines and blocks pulls with "your local changes would be overwritten".
+#
+# Rule: repo stores text as LF; Git normalizes on compare so the working tree
+# can hold CRLF (Windows scripts) without ever looking "modified".
+
+* text=auto
+
+# Windows-run scripts — CRLF in the working tree
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# Code / web / docs — LF everywhere (works on Windows + Linux)
+*.js    text eol=lf
+*.mjs   text eol=lf
+*.json  text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.md    text eol=lf
+*.sql   text eol=lf
+*.env   text eol=lf
+
+# Binary — never convert
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.xlsx  binary
+*.db    binary

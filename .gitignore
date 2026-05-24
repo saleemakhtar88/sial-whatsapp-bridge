@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Secrets / runtime config — copy .env.example -> .env and fill in on each machine
+.env
+
+# WhatsApp Web session + cache (device-specific; re-scan the QR on a new machine)
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Logs
+logs/
+*.log
+
+# Legacy / abandoned OpenWA experiment — a separate nested git repo, NOT part of
+# this whatsapp-web.js bridge. Kept on disk for reference but never committed.
+OpenWA/
+whatsappService.js
+scan-qr.html
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
