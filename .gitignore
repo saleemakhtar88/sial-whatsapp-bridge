@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 
+# Project-local puppeteer Chromium cache (downloaded by install-deps.bat so the
+# Windows service can find it). ~250 MB — never commit.
+.cache/
+
 # Secrets / runtime config — copy .env.example -> .env and fill in on each machine
 .env
 
