@@ -210,13 +210,26 @@ function startWatchdog() {
 
 function init() {
   initStartedAt = Date.now();
-  client = new Client({
+  const clientOpts = {
     authStrategy: new LocalAuth({ dataPath: config.sessionPath }),
     puppeteer: {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     },
-  });
+  };
+  // Optional: pin a specific WhatsApp Web version (set WA_WEB_VERSION in .env).
+  // Use this if linking fails with "couldn't link device" because WhatsApp's
+  // live web build broke the installed whatsapp-web.js. The version HTML is
+  // served from the wppconnect wa-version mirror.
+  if (config.webVersion) {
+    clientOpts.webVersion = config.webVersion;
+    clientOpts.webVersionCache = {
+      type: 'remote',
+      remotePath: `https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/${config.webVersion}.html`,
+    };
+    logger.warn(`[CONFIG] Pinning WhatsApp Web version ${config.webVersion}`);
+  }
+  client = new Client(clientOpts);
 
   client.on('qr', async (qr) => {
     lastQr = qr;

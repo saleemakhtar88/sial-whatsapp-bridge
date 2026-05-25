@@ -19,5 +19,9 @@ module.exports = {
   maxDelayMs: num(process.env.MAX_DELAY_MS, 8000),
   maxRetries: num(process.env.MAX_RETRIES, 3),
   verifyNumber: bool(process.env.VERIFY_NUMBER, true),
+  // Optional: pin a specific WhatsApp Web version (e.g. 2.3000.10xxxxxxx-alpha)
+  // to work around "couldn't link device" when WhatsApp's live web build breaks
+  // the installed whatsapp-web.js. Empty = let whatsapp-web.js choose.
+  webVersion: process.env.WA_WEB_VERSION || '',
   logLevel: process.env.LOG_LEVEL || 'info',
 };
