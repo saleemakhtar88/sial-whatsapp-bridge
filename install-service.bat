@@ -53,7 +53,7 @@ echo.
 REM Refuse non-LTS Node (v25 crashes as a service; LTS lines are stable)
 echo %NODE_VER% | findstr /R "^v20\. ^v22\. ^v24\." >nul
 if errorlevel 1 (
-  echo === WARNING: Node %NODE_VER% is not on an LTS line (v20/v22/v24). ===
+  echo === WARNING: Node %NODE_VER% is not on an LTS line v20, v22 or v24. ===
   echo Non-LTS builds can crash as a Windows service. Install Node 22 LTS.
   choice /C YN /N /M "Continue anyway? (Y/N): "
   if errorlevel 2 exit /b 1
@@ -75,7 +75,7 @@ findstr /B /C:"API_KEY=change-me-to-a-long-random-secret" .env >nul 2>&1 && set 
 findstr /R /B /C:"API_KEY=$" .env >nul 2>&1 && set KEY_OK=
 if not defined KEY_OK (
   echo === API_KEY is missing, empty, or still the placeholder in .env ===
-  echo Set a long random API_KEY (must match WHATSAPP_API_KEY in the SIAL .env).
+  echo Set a long random API_KEY - must match WHATSAPP_API_KEY in the SIAL .env.
   notepad .env
   pause & exit /b 1
 )
@@ -195,7 +195,7 @@ set HEALTH_OK=
 for /l %%n in (1,1,8) do (
   if not defined HEALTH_OK (
     timeout /t 5 /nobreak >nul
-    for /f "delims=" %%h in ('powershell -NoProfile -Command "try{(Invoke-RestMethod http://localhost:%PORT%/health -TimeoutSec 4) | ConvertTo-Json -Compress}catch{''}"') do set HEALTH=%%h
+    for /f "delims=" %%h in ('powershell -NoProfile -Command "try{ Invoke-RestMethod http://localhost:%PORT%/health -TimeoutSec 4 | ConvertTo-Json -Compress }catch{''}"') do set HEALTH=%%h
     echo   !HEALTH!
     echo !HEALTH! | findstr /C:"\"ready\":true" >nul && set HEALTH_OK=ready
     echo !HEALTH! | findstr /C:"\"hasQr\":true" >nul && set HEALTH_OK=qr
@@ -214,7 +214,7 @@ if "%HEALTH_OK%"=="ready" (
   echo  Service is RUNNING but WhatsApp hasn't reported ready/QR yet.
   echo  Give it another minute, then check:  http://localhost:%PORT%/health
   echo  If it never shows ready or hasQr, the Chromium launch likely failed -
-  echo  re-run install-deps.bat (it puts Chromium in .cache so SYSTEM can use it).
+  echo  re-run install-deps.bat - it puts Chromium in .cache so SYSTEM can use it.
 )
 echo ===========================================================================
 echo.
