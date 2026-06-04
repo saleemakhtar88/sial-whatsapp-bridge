@@ -15,6 +15,8 @@ let reinitializing = false;
 let initStartedAt = 0;       // when the current init() began
 let stuckReinitCount = 0;    // consecutive "authenticated but never ready" reinits
 let watchdog = null;
+let logoutInProgress = false;  // set during manual logout — prevents the auto-recovery
+                                // 'disconnected' handler from racing with our clearSession reinit
 
 const STUCK_MS    = 90 * 1000;   // not-ready (no QR) longer than this → reinit
 const WATCHDOG_MS = 60 * 1000;   // health-check interval
@@ -37,7 +39,11 @@ async function getQrDataUrl() {
 }
 
 function normalizeNumber(raw) {
-  return String(raw).replace(/\D/g, '');
+  let d = String(raw).replace(/\D/g, '');     // keep digits only
+  if (d.startsWith('00')) d = d.slice(2);      // 0092… (intl prefix) -> 92…
+  if (d.startsWith('0')) d = '92' + d.slice(1); // 0333… (PK local) -> 92333…
+  else if (d.length === 10) d = '92' + d;       // 3338685105 -> 923338685105
+  return d;
 }
 
 // Errors that mean the underlying WhatsApp Web session/browser is dead and a
@@ -260,6 +266,12 @@ function init() {
 
   client.on('disconnected', (reason) => {
     isReady = false;
+    // During a manual logout, our own logout() flow drives the reinit (with
+    // clearSession=true) — don't double-trigger from here.
+    if (logoutInProgress) {
+      logger.warn(`[LOGOUT] disconnected during manual logout (${reason}) — letting logout() finish the reinit.`);
+      return;
+    }
     logger.error(`WhatsApp disconnected: ${reason}.`);
     reinitialize(`disconnected: ${reason}`);
   });
@@ -275,4 +287,35 @@ function init() {
   return client;
 }
 
-module.exports = { init, sendMessage, sendMedia, checkNumber, ready, getStatus, getQrDataUrl };
+// Manually unlink the currently-linked WhatsApp account so a different number
+// can be paired (e.g. switching from a personal cell to a company line). Steps:
+//   1. client.logout() — proper WhatsApp Web logout: invalidates the session
+//      on the WhatsApp server so the phone's "Linked devices" no longer lists
+//      this bridge. Best-effort; if it fails (session already dead) we keep going.
+//   2. destroy() + wipe `.wwebjs_auth` so the next initialize() can't restore
+//      the old session.
+//   3. re-initialize() — fresh client, fresh QR. /health will start reporting
+//      hasQr:true within a few seconds, ready:false until the new phone scans.
+// Returns { ok: true } once the teardown is queued; the QR appears asynchronously.
+async function logout() {
+  logger.warn('[LOGOUT] manual logout requested — disconnecting & clearing saved session');
+  logoutInProgress = true;
+  if (client) {
+    try {
+      await client.logout();
+      logger.info('[LOGOUT] client.logout() ok — session invalidated on WhatsApp side');
+    } catch (e) {
+      // Common when the session is already dead — just log and continue with
+      // the local teardown so the bridge still ends up in a fresh-QR state.
+      logger.warn('[LOGOUT] client.logout() threw (' + e.message + ') — continuing with local wipe');
+    }
+  }
+  // Force a clean reinit even if some other recovery flow is mid-reinit.
+  reinitializing = false;
+  isReady = false;
+  await reinitialize('manual logout', { clearSession: true });
+  logoutInProgress = false;
+  return { ok: true };
+}
+
+module.exports = { init, sendMessage, sendMedia, checkNumber, ready, getStatus, getQrDataUrl, logout };

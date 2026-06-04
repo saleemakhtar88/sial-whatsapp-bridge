@@ -109,6 +109,20 @@ app.post('/check-number', requireApiKey, async (req, res) => {
   }
 });
 
+// Manually unlink the currently-paired WhatsApp number so a different number
+// can be linked (e.g. switching from a personal cell to a company line).
+// Protected by x-api-key. After this the bridge clears its saved session and
+// shows a fresh QR on /qr (and via the qrDataUrl in /health). Hot-reset; no
+// service restart needed.
+app.post('/logout', requireApiKey, async (req, res) => {
+  try {
+    await wa.logout();
+    return res.json({ success: true, message: 'WhatsApp unlinked. A new QR will appear within a few seconds.' });
+  } catch (e) {
+    return res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 app.listen(config.port, () => {
   logger.info(`WhatsApp bridge listening on http://localhost:${config.port}`);
   logger.info(`First-time login: open http://localhost:${config.port}/qr and scan with your alternate number`);
