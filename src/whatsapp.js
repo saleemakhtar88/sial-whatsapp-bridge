@@ -221,6 +221,9 @@ function init() {
     puppeteer: {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      // Media (image) sends can exceed Puppeteer's default 180s protocol timeout
+      // and die with "Runtime.callFunctionOn timed out". Give them more room.
+      protocolTimeout: Number(process.env.PROTOCOL_TIMEOUT_MS) || 600000,
     },
   };
   // Optional: pin a specific WhatsApp Web version (set WA_WEB_VERSION in .env).
